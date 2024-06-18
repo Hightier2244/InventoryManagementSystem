@@ -2,24 +2,29 @@ package javaClasses;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 
 public class Main extends Application {
 
-    private TableView<Product> table;
+    private TableView<Product> productTable;
+    private TableView<Sale> salesTable;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Inventarverwaltungssystem");
 
-        table = new TableView<>();
+        productTable = new TableView<>();
+        salesTable = new TableView<>();
 
         TableColumn<Product, String> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -36,28 +41,51 @@ public class Main extends Application {
         TableColumn<Product, Integer> quantityColumn = new TableColumn<>("Menge");
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
-        table.getColumns().add(idColumn);
-        table.getColumns().add(nameColumn);
-        table.getColumns().add(descriptionColumn);
-        table.getColumns().add(priceColumn);
-        table.getColumns().add(quantityColumn);
+        productTable.getColumns().add(idColumn);
+        productTable.getColumns().add(nameColumn);
+        productTable.getColumns().add(descriptionColumn);
+        productTable.getColumns().add(priceColumn);
+        productTable.getColumns().add(quantityColumn);
 
-        Button addButton = new Button("Produkt hinzufügen");
-        addButton.setOnAction(e -> {
+        // Sales Table Columns
+        TableColumn<Sale, Integer> saleIdColumn = new TableColumn<>("Verkauf ID");
+        saleIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<Sale, Integer> saleProductIdColumn = new TableColumn<>("Produkt ID");
+        saleProductIdColumn.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<Sale, Integer> saleQuantityColumn = new TableColumn<>("Menge");
+        saleQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        TableColumn<Sale, Date> saleDateColumn = new TableColumn<>("Verkaufsdatum");
+        saleDateColumn.setCellValueFactory(new PropertyValueFactory<>("salesDate"));
+
+        salesTable.getColumns().add(saleIdColumn);
+        salesTable.getColumns().add(saleProductIdColumn);
+        salesTable.getColumns().add(saleQuantityColumn);
+        salesTable.getColumns().add(saleDateColumn);
+
+        Button addProductButton = new Button("Produkt hinzufügen");
+        addProductButton.setOnAction(e -> {
             // Öffnen Sie ein neues Fenster zum Hinzufügen von Produkten
             AddProductWindow.display();
-            updateTable();
+            updateTables();
         });
+
+        Button removeProductButton = new Button("Produkt entfernen");
+        removeProductButton.setOnAction(e -> removeProduct());
 
         Button addSaleButton = new Button("Verkauf hinzufügen");
         addSaleButton.setOnAction(e -> {
             addSale();
-            updateTable();
         });
+
+        Button removeSaleButton = new Button("Verkauf entfernen");
+        removeSaleButton.setOnAction(e -> removeSale());
 
         Button updateButton = new Button("Tabelle aktualisieren");
         updateButton.setOnAction(e -> {
-            updateTable();
+            updateTables();
         });
 
         Button calculateAveragePriceButton = new Button("Durchschnittspreis berechnen");
@@ -66,7 +94,7 @@ public class Main extends Application {
             try {
                 averagePrice = ProductManager.calculateAveragePrice();
             } catch (SQLException ex) {
-                throw new RuntimeException(ex);
+                showAlert("Fehler beim Berechnen des Durchschnittspreises", "Fehler: " + ex.getMessage(), Alert.AlertType.ERROR);
             }
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Durchschnittspreis");
@@ -75,23 +103,71 @@ public class Main extends Application {
             alert.showAndWait();
         });
 
-        updateTable();
+        VBox productButtons = new VBox(10, addProductButton, removeProductButton, updateButton, calculateAveragePriceButton);
+        productButtons.setPadding(new Insets(10));
 
-        VBox vbox = new VBox(table, addButton, addSaleButton, updateButton, calculateAveragePriceButton);
-        Scene scene = new Scene(vbox);
+        VBox salesButtons = new VBox(10, addSaleButton, removeSaleButton);
+        salesButtons.setPadding(new Insets(10));
+
+        VBox productVBox = new VBox(10, productTable, productButtons);
+        VBox salesVBox = new VBox(10, salesTable, salesButtons);
+
+        HBox mainLayout = new HBox(20, productVBox, salesVBox);
+        mainLayout.setPadding(new Insets(10));
+
+        Scene scene = new Scene(mainLayout);
 
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        updateTables();
     }
 
-    private void updateTable() {
+    private void updateTables() {
         try {
             List<Product> productList = ProductManager.getAllProducts();
-            table.setItems(FXCollections.observableArrayList(productList));
+            productTable.setItems(FXCollections.observableArrayList(productList));
+
+            List<Sale> salesList = SalesManager.getAllSales();
+            salesTable.setItems(FXCollections.observableArrayList(salesList));
         } catch (SQLException ex) {
             ex.printStackTrace();
             showAlert("Fehler beim Laden der Produkte", "Fehler beim Laden der Produkte aus der Datenbank: " + ex.getMessage(), Alert.AlertType.ERROR);
         }
+    }
+
+    private void removeProduct() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Produkt entfernen");
+        dialog.setHeaderText("Produkt ID eingeben");
+        dialog.setContentText("Bitte Produkt ID eingeben:");
+
+        dialog.showAndWait().ifPresent(id -> {
+            try {
+                ProductManager.removeProduct(Integer.parseInt(id));
+                updateTables();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert("Fehler beim Entfernen des Produkts", "Fehler: " + ex.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
+    }
+
+    private void removeSale() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Verkauf entfernen");
+        dialog.setHeaderText("Verkauf ID eingeben");
+        dialog.setContentText("Bitte Verkauf ID eingeben:");
+
+        dialog.showAndWait().ifPresent(id -> {
+            try {
+                SalesManager.removeSale(Integer.parseInt(id));
+                updateTables();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showAlert("Fehler beim Entfernen des Verkaufs", "Fehler: " + ex.getMessage(), Alert.AlertType.ERROR);
+            }
+        });
     }
 
     private void showAlert(String title, String content, Alert.AlertType alertType) {
@@ -122,6 +198,7 @@ public class Main extends Application {
             int quantity = Integer.parseInt(quantityInput.getText());
             SalesManager.addSale(productId, quantity);
             window.close();
+            updateTables();
         });
 
         layout.getChildren().addAll(new Label("Produkt ID"), productIdInput, new Label("Menge"), quantityInput, submitButton);
