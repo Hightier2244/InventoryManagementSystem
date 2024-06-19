@@ -3,7 +3,6 @@ CREATE OR ALTER FUNCTION SRaichle_CalculateAveragePrice()
 AS
 BEGIN
     DECLARE @AvgPrice DECIMAL(10, 2)
-    SELECT @AvgPrice = SUM(Price * Quantity) / SUM(Quantity)
-    FROM db_owner.SRaichle_Products
+    SELECT @AvgPrice = AVG(Price) FROM db_owner.SRaichle_Products
     RETURN @AvgPrice
 END
