@@ -10,7 +10,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
 
+//class to call, when the database is not initialized yet
 public class SqlRunner {
+    // function to run a sql file
     public static void runSqlFile(String fileName) throws IOException, SQLException {
         Connection con = DatabaseConnection.getConnection();
         Statement stmt = con.createStatement();

@@ -26,6 +26,7 @@ public class Main extends Application {
         productTable = new TableView<>();
         salesTable = new TableView<>();
 
+        // Product Table Columns
         TableColumn<Product, String> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
 
@@ -41,6 +42,7 @@ public class Main extends Application {
         TableColumn<Product, Integer> quantityColumn = new TableColumn<>("Menge");
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
+        // adding the columns to the table
         productTable.getColumns().add(idColumn);
         productTable.getColumns().add(nameColumn);
         productTable.getColumns().add(descriptionColumn);
@@ -60,11 +62,13 @@ public class Main extends Application {
         TableColumn<Sale, Date> saleDateColumn = new TableColumn<>("Verkaufsdatum");
         saleDateColumn.setCellValueFactory(new PropertyValueFactory<>("salesDate"));
 
+        // adding the columns to the table
         salesTable.getColumns().add(saleIdColumn);
         salesTable.getColumns().add(saleProductIdColumn);
         salesTable.getColumns().add(saleQuantityColumn);
         salesTable.getColumns().add(saleDateColumn);
 
+        // Initializing all the Buttons
         Button addProductButton = new Button("Produkt hinzufügen");
         addProductButton.setOnAction(e -> {
             // Öffnen Sie ein neues Fenster zum Hinzufügen von Produkten
@@ -103,15 +107,19 @@ public class Main extends Application {
             alert.showAndWait();
         });
 
+        // VBox for the left buttons
         VBox productButtons = new VBox(10, addProductButton, removeProductButton, updateButton, calculateAveragePriceButton);
         productButtons.setPadding(new Insets(10));
 
+        // VBox for the right buttons
         VBox salesButtons = new VBox(10, addSaleButton, removeSaleButton);
         salesButtons.setPadding(new Insets(10));
 
+        // VBox to combine tables and buttons
         VBox productVBox = new VBox(10, productTable, productButtons);
         VBox salesVBox = new VBox(10, salesTable, salesButtons);
 
+        // HBox to combine both sides
         HBox mainLayout = new HBox(20, productVBox, salesVBox);
         mainLayout.setPadding(new Insets(10));
 
@@ -120,9 +128,11 @@ public class Main extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
+        // update to populate the tables
         updateTables();
     }
 
+    // update function to populate the tables
     private void updateTables() {
         try {
             List<Product> productList = ProductManager.getAllProducts();
@@ -136,6 +146,7 @@ public class Main extends Application {
         }
     }
 
+    // function for a pop-up to remove a product
     private void removeProduct() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Produkt entfernen");
@@ -153,6 +164,7 @@ public class Main extends Application {
         });
     }
 
+    // function for a pop-up to remove a sale
     private void removeSale() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Verkauf entfernen");
@@ -170,6 +182,7 @@ public class Main extends Application {
         });
     }
 
+    // function to show an error alert
     private void showAlert(String title, String content, Alert.AlertType alertType) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
@@ -178,6 +191,7 @@ public class Main extends Application {
         alert.showAndWait();
     }
 
+    // function for a pop-up to add a sale
     private void addSale() {
         // Create a new window or dialog to collect sale details
         Stage window = new Stage();
